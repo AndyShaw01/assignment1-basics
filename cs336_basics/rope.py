@@ -5,8 +5,6 @@ class RoPE(torch.nn.Module):
         super().__init__()
         self.d_k = d_k
         self.d = d_k // 2
-        # self.cos = [[0 for _ in range(d_k / 2)] for _ in range(max_seq_len)]
-        # self.sin = [[0 for _ in range(d_k / 2)] for _ in range(max_seq_len)]
         if improved_version:
             # positions: [T]
             pos = torch.arange(max_seq_len, device=device)  # (T,)
