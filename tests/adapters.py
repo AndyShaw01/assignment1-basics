@@ -461,8 +461,8 @@ def run_softmax(in_features: Float[Tensor, " ..."], dim: int) -> Float[Tensor, "
     """
     # raise NotImplementedError
     from cs336_basics.softmax import Softmax
-    softmax = Softmax(dim=dim)
-    return softmax(in_features)
+    softmax = Softmax()
+    return softmax(in_features, dim)
 
 
 def run_cross_entropy(
