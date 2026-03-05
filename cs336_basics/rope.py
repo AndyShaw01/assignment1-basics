@@ -29,16 +29,21 @@ class RoPE(torch.nn.Module):
                     temp_theta = i / torch.pow(theta_base, (2.0 * k) / float(self.d_k))
                     cos_table[pos, k] = torch.cos(temp_theta)
                     sin_table[pos, k] = torch.sin(temp_theta)
-        self.register_buffer("cos", cos_table, persistent=True)
-        self.register_buffer("sin", sin_table, persistent=True)
+        self.register_buffer("cos", cos_table, persistent=False)
+        self.register_buffer("sin", sin_table, persistent=False)
 
     def forward(self, x, token_positions):
-        # x.shape: [B, T, D_K]
-        cos = self.cos[token_positions] # [t, D_K // 2]
-        sin = self.sin[token_positions] # [t, D_K // 2]
+        # [... t, D_K // 2] 
+        # when the token_pos.shape=[T], the cos.shape is [t, D_K//2]
+        # when the token_pos.shape=[1, T], the cos.shape is [1, t, D_K//2]
+        cos = self.cos[token_positions]
+        sin = self.sin[token_positions] 
+        x_even = x[..., 0::2] # [B, H ,T, D/2]
+        x_old = x[..., 1::2] 
 
-        x_even = x[..., 0::2]
-        x_old = x[..., 1::2]
+        while cos.ndim < x_even.ndim: # when the token_position.shape==[T], 
+            cos = cos.unsqueeze(-3)
+            sin = sin.unsqueeze(-3)
 
         y_even = x_even * cos - x_old * sin
         y_old = x_even * sin + x_old * cos
