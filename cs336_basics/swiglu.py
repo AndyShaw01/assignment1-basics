@@ -23,3 +23,8 @@ class SwiGLU(torch.nn.Module):
         result = self.w2(silu * value)
         return result
         
+class SiLU(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+    def forward(self, x):
+        return x * torch.sigmoid(x)
