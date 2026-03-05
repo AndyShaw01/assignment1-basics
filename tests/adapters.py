@@ -32,7 +32,7 @@ def run_linear(
     # raise NotImplementedError
     from cs336_basics.linear import Linear
     linear = Linear(in_features=d_in, out_features=d_out, device=weights.device, dtype=weights.dtype)
-    linear.load_state_dict({"W": weights})
+    linear.load_state_dict({"weight": weights})
     out_features = linear(in_features)
     return out_features
     
@@ -61,7 +61,7 @@ def run_embedding(
     # raise NotImplementedError
     from cs336_basics.embedding import Embedding
     embeddings = Embedding(vocab_size, d_model, device=weights.device, dtype=weights.dtype)
-    embeddings.load_state_dict({"weights": weights})
+    embeddings.load_state_dict({"weight": weights})
     token_embs = embeddings(token_ids)
     return token_embs
 
@@ -98,9 +98,9 @@ def run_swiglu(
     # raise NotImplementedError
     from cs336_basics.swiglu import SwiGLU
     swiglu = SwiGLU(d_model, d_ff, device=in_features.device, dtype=in_features.dtype)
-    swiglu.w1.W.data = w1_weight
-    swiglu.w2.W.data = w2_weight
-    swiglu.w3.W.data = w3_weight
+    swiglu.w1.weight.data = w1_weight
+    swiglu.w2.weight.data = w2_weight
+    swiglu.w3.weight.data = w3_weight
     result = swiglu(in_features)
     return result
 
@@ -164,10 +164,10 @@ def run_multihead_self_attention(
     # raise NotImplementedError
     from cs336_basics.multihead_self_attention import MultiHeadSelfAttention
     mha = MultiHeadSelfAttention(d_model, num_heads, max_seq_length=in_features.shape[-2], device=in_features.device)
-    mha.load_state_dict({"w_q.W": q_proj_weight, 
-                         "w_k.W": k_proj_weight, 
-                         "w_v.W": v_proj_weight,
-                         "w_o.W": o_proj_weight})
+    mha.load_state_dict({"q_proj.weight": q_proj_weight, 
+                         "k_proj.weight": k_proj_weight, 
+                         "v_proj.weight": v_proj_weight,
+                         "output_proj.weight": o_proj_weight})
     output = mha(in_features)
     return output
     
@@ -213,10 +213,10 @@ def run_multihead_self_attention_with_rope(
     # raise NotImplementedError
     from cs336_basics.multihead_self_attention import MultiHeadSelfAttention
     mha = MultiHeadSelfAttention(d_model, num_heads, max_seq_length=max_seq_len, theta=theta, device=in_features.device)
-    mha.load_state_dict({"w_q.W": q_proj_weight, 
-                         "w_k.W": k_proj_weight, 
-                         "w_v.W": v_proj_weight,
-                         "w_o.W": o_proj_weight})
+    mha.load_state_dict({"q_proj.weight": q_proj_weight, 
+                         "k_proj.weight": k_proj_weight, 
+                         "v_proj.weight": v_proj_weight,
+                         "output_proj.weight": o_proj_weight})
     output = mha(in_features, using_rope=True, token_positions=token_positions)
     return output
 
@@ -319,16 +319,7 @@ def run_transformer_block(
     # raise NotImplementedError
     from cs336_basics.transformer_block import TransformerBlock
     transformer_block = TransformerBlock(d_model, num_heads, d_ff, max_seq_len, theta, device=in_features.device, dtype=in_features.dtype)
-    import pdb; pdb.set_trace()
-    transformer_block.load_state_dict({"attn.w_q.W": weights["attn.q_proj.weight"], 
-                                       "attn.w_k.W": weights["attn.k_proj.weight"],
-                                       "attn.w_v.W": weights["attn.v_proj.weight"],
-                                       "attn.w_o.W": weights["attn.output_proj.weight"],
-                                       "norm_1.g": weights["ln1.weight"],
-                                       "norm_2.g": weights["ln2.weight"],
-                                       "ffn.w1.W": weights["ffn.w1.weight"],
-                                       "ffn.w2.W": weights["ffn.w2.weight"],
-                                       "ffn.w3.W": weights["ffn.w3.weight"],})
+    transformer_block.load_state_dict(weights, strict=True)
     output = transformer_block(in_features)
     return output
 
@@ -412,7 +403,22 @@ def run_transformer_lm(
         Float[Tensor, "batch_size sequence_length vocab_size"]: Tensor with the predicted unnormalized
         next-word distribution for each token.
     """
-    raise NotImplementedError
+    # raise NotImplementedError
+    from cs336_basics.transformer_lm import TransformerLM
+    transformer = TransformerLM(
+        vocab_size=vocab_size,
+        context_length=context_length,
+        d_model=d_model,
+        num_layers=num_layers,
+        num_heads=num_heads,
+        d_ff=d_ff,
+        rope_theta=rope_theta,
+        device=in_indices.device,
+        dtype=torch.float32,
+    )
+    transformer.load_state_dict(weights, strict=True)
+    output = transformer(in_indices)
+    return output
 
 
 def run_rmsnorm(
@@ -438,7 +444,7 @@ def run_rmsnorm(
     # raise NotImplementedError
     from cs336_basics.rmsnorm import RMSNorm
     rmsnorm = RMSNorm(d_model, eps, device=weights.device, dtype=weights.dtype)
-    rmsnorm.load_state_dict({"g": weights})
+    rmsnorm.load_state_dict({"weight": weights})
     out_features = rmsnorm(in_features)
     return out_features
 
@@ -455,7 +461,10 @@ def run_silu(in_features: Float[Tensor, " ..."]) -> Float[Tensor, " ..."]:
         Float[Tensor,"..."]: of with the same shape as `in_features` with the output of applying
         SiLU to each element.
     """
-    raise NotImplementedError
+    # raise NotImplementedError
+    from cs336_basics.swiglu import SiLU
+    silu = SiLU()
+    return silu(in_features)
 
 
 def run_get_batch(
